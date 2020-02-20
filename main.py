@@ -10,11 +10,42 @@ from trainer.simclr import SimclrTrainer
 import torch.optim as optim
 from dataset.simclr import UnsupDataset
 from losses.basic import nll_loss
-from trainer.mnist import MnistTrainer
+from trainer.classifier import ClassifierTrainer
+import torch.nn.functional as F
 
 def get_stl(path='./data/'):
-    dataset = STL10(root=path, split='unlabeled', folds=None, transform=None, target_transform=None, download=True)
-    return dataset
+
+    im_size = 64
+    batch_size = 2
+
+    train_dataset = STL10(root=path, split='unlabeled', folds=None, transform=None, target_transform=None, download=True)
+    linear_train_dataset = STL10(root=path, split='train', folds=None, transform=tfs.Compose([
+                tfs.Resize((int(im_size*1.25), int(im_size*1.25))), # increase image size slightly
+                tfs.RandomCrop((im_size, im_size)),
+                tfs.ColorJitter(brightness=5, contrast=5, saturation=5, hue=0.5),
+                tfs.ToTensor()
+            ]), target_transform=None, download=True)
+    val_dataset = STL10(root=path, split='test', folds=None, transform=tfs.Compose([
+                tfs.Resize((int(im_size*1.25), int(im_size*1.25))), # increase image size slightly
+                tfs.RandomCrop((im_size, im_size)),
+                tfs.ColorJitter(brightness=5, contrast=5, saturation=5, hue=0.5),
+                tfs.ToTensor()
+            ]), target_transform=None, download=True)
+
+    transforms = tfs.Compose([
+        tfs.Resize((int(im_size*1.25), int(im_size*1.25))), # increase image size slightly
+        tfs.RandomCrop((im_size, im_size)),
+        tfs.ColorJitter(brightness=5, contrast=5, saturation=5, hue=0.5),
+        tfs.ToTensor()
+    ])
+
+    unsup_dataset = UnsupDataset(train_dataset, transforms, im_size)
+
+    train_loader = DataLoader(unsup_dataset, batch_size=batch_size, shuffle=True)
+    linear_train_loader = DataLoader(linear_train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+    return train_loader, linear_train_loader, val_loader
 
 def get_mnist(path='./data'):
     train_dataset = MNIST('../data', train=True, download=True, transform=tfs.Compose([
@@ -32,25 +63,13 @@ def get_mnist(path='./data'):
     return train_loader, val_loader
 
 def test_stl10():
-    dataset = get_stl()
-    im_size = 64
-
-    transforms = tfs.Compose([
-        tfs.Resize((512, 512)),
-        tfs.RandomCrop((im_size, im_size)),
-        tfs.ColorJitter(brightness=5, contrast=5, saturation=5, hue=0.5),
-        tfs.ToTensor()
-    ])
-
-    unsup_dataset = UnsupDataset(dataset, transforms, im_size)
-    data_loader = DataLoader(unsup_dataset, batch_size=1, shuffle=False)
-
+    
+    train_loader, linear_train_loader, val_loader = get_stl()
     resnet18 = models.resnet18()
-    model_func = get_model("simclr")
-    model = model_func()
+    model = get_model("simclr")()
 
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-    trainer = SimclrTrainer(10, model, data_loader, data_loader, get_loss, optimizer)
+    trainer = SimclrTrainer(10, model, train_loader, linear_train_loader, val_loader, get_loss, optimizer)
     trainer.train()
 
 
@@ -58,7 +77,7 @@ def test_mnist():
     train_loader, val_loader = get_mnist()
     model = get_model("mnist")()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    trainer = MnistTrainer(10, model, train_loader, val_loader, nll_loss, optimizer)
+    trainer = ClassifierTrainer(10, model, train_loader, val_loader, nll_loss, optimizer)
     trainer.train()
 
 # test_mnist()

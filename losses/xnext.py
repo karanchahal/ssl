@@ -3,7 +3,6 @@ import numpy as np
 
 
 def _simclr(im, aug_im):
-
     n, _ = im.size()
     im_2_aug = torch.mm(im, torch.transpose(aug_im, 0, 1)) # im = n x 128, 128 x n =>  n x n, where diagonal is positive, rest all are negatives
     im_2_other_im = torch.mm(im, torch.transpose(im, 0, 1)) # n x 128, 128 x n , -> n x n where diagonal is positive, rest all are negatives
@@ -65,7 +64,7 @@ def analytical_ans():
 def get_loss(a, b):
     loss1 = _simclr(a, b)
     loss2 = _simclr(b, a)
-    loss = loss1 + loss2
+    loss = torch.sum(loss1 + loss2, dim=0)
     N = a.shape[0]
     return loss / (2*N)
 

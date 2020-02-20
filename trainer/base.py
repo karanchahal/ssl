@@ -20,5 +20,6 @@ class Trainer:
     
     def step(self, loss):
         self.optimizer.zero_grad()
+        print(loss)
         loss.backward()
         self.optimizer.step()

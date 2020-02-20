@@ -1,9 +1,10 @@
 from trainer.base import Trainer 
 import torch.nn.functional as F
-class MnistTrainer(Trainer):
+
+class ClassifierTrainer(Trainer):
 
     def __init__(self, epochs, model, train_dataloader, val_dataloader, loss_func, optimizer):
-        super(MnistTrainer, self).__init__(epochs, model, train_dataloader, val_dataloader, loss_func, optimizer)
+        super(ClassifierTrainer, self).__init__(epochs, model, train_dataloader, val_dataloader, loss_func, optimizer)
         self.stats = {
             "train_loss" : [],
             "val_loss" : [],
@@ -15,8 +16,12 @@ class MnistTrainer(Trainer):
         for ep in range(self.epochs):
             train_stats = self._train_1_epoch()
             self.log(train_stats, ep)
-            val_stats = self.validate()
-            self.log(val_stats, ep)
+            if self.val_dataloader != None:
+                val_stats = self.validate()
+                self.log(val_stats, ep)
+            else:
+                val_stats = { "val_loss" : 0, "val_acc": 0 }
+
             self.printSummary(train_stats, val_stats, ep)
 
     def _train_1_epoch(self):
@@ -24,12 +29,16 @@ class MnistTrainer(Trainer):
         correct = 0
         self.model.train()
         for (im, tar) in self.train_dataloader:
+            print(im.size())
+            print(tar.size())
             out = self.model(im)
+            print(out.size())
             loss = self.loss_func(out, tar)
             self.step(loss)
             total_loss += loss.item()
             pred = out.argmax(dim=1, keepdim=True)
             correct += pred.eq(tar.view_as(pred)).sum().item()
+            break
         
         total_loss /= len(self.train_dataloader)
         acc = float(correct*100 / len(self.train_dataloader.dataset))

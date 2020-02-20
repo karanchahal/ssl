@@ -13,7 +13,7 @@ class UnsupDataset(Dataset):
         ])
     
     def __len__(self):
-        return len(self.d) * 2
+        return len(self.d)
     
     def __getitem__(self, idx):
         im, _ = self.d[idx] # PIL image, -1 cause it's unlabeled
