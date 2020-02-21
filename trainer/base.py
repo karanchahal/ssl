@@ -1,5 +1,5 @@
 from torch.utils.tensorboard import SummaryWriter
-
+import torch
 class Trainer:
 
     def __init__(self, epochs, model, train_dataloader, val_dataloader, loss_func, optimizer):
@@ -10,6 +10,7 @@ class Trainer:
         self.loss_func = loss_func
         self.optimizer = optimizer
         self.writer = SummaryWriter()
+        self.device = torch.device("cuda" if use_cuda else "cpu")
 
     def train(self):
         raise NotImplementedError
@@ -20,6 +21,5 @@ class Trainer:
     
     def step(self, loss):
         self.optimizer.zero_grad()
-        print(loss)
         loss.backward()
         self.optimizer.step()

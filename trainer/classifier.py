@@ -29,10 +29,8 @@ class ClassifierTrainer(Trainer):
         correct = 0
         self.model.train()
         for (im, tar) in self.train_dataloader:
-            print(im.size())
-            print(tar.size())
+            im, tar = im.to(self.device), tar.to(self.device)
             out = self.model(im)
-            print(out.size())
             loss = self.loss_func(out, tar)
             self.step(loss)
             total_loss += loss.item()
@@ -52,6 +50,7 @@ class ClassifierTrainer(Trainer):
         correct = 0
         self.model.eval()
         for (im, tar) in self.val_dataloader:
+            im, tar = im.to(self.device), tar.to(self.device)
             out = self.model(im)
             loss = self.loss_func(out, tar)
             total_loss += loss.item()

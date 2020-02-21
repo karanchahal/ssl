@@ -31,6 +31,7 @@ class SimclrTrainer(Trainer):
         total_loss = 0
         self.model.train()
         for (im, aug_im) in self.train_dataloader:
+            im, aug_im = im.to(self.device), aug_im.to(self.device)
             z, _ = self.model(im)
             z_aug, _ = self.model(aug_im)
             loss = self.loss_func(z, z_aug)
@@ -56,6 +57,7 @@ class SimclrTrainer(Trainer):
         correct = 0
         self.model2.eval()
         for (im, tar) in self.val_dataloader:
+            im, tar = im.to(self.device), tar.to(self.device)
             out = self.model2(im)
             loss = nll_loss(out, tar)
             total_loss += loss.item()
@@ -71,6 +73,7 @@ class SimclrTrainer(Trainer):
 
     def train_linear_layer(self):
         self.model2 = get_model('classifier')(self.model, self.im_size, self.num_classes)
+        self.model2.to(self.device)
         optimizer2 = optim.SGD(filter(lambda p: p.requires_grad, self.model2.parameters()), lr=0.01, momentum=0.9)
         self.trainer_val = ClassifierTrainer(self.epochs_linear, self.model2, self.linear_train_loader, None, nll_loss, optimizer2)
         self.trainer_val.train()
