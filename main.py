@@ -82,5 +82,5 @@ def test_mnist():
     trainer = ClassifierTrainer(10, model, train_loader, val_loader, nll_loss, optimizer)
     trainer.train()
 
-# test_mnist()
-test_stl10()
+test_mnist()
+# test_stl10()

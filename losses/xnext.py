@@ -7,7 +7,7 @@ def _simclr(im, aug_im):
     im_2_aug = torch.mm(im, torch.transpose(aug_im, 0, 1)) # im = n x 128, 128 x n =>  n x n, where diagonal is positive, rest all are negatives
     im_2_other_im = torch.mm(im, torch.transpose(im, 0, 1)) # n x 128, 128 x n , -> n x n where diagonal is positive, rest all are negatives
 
-    get_negs = torch.ones((n,n))
+    get_negs = torch.ones((n,n)).cuda()
     ind = torch.tensor(np.diag_indices(get_negs.shape[0]))
     get_negs[ind[0], ind[1]] = 0
     '''
@@ -20,7 +20,7 @@ def _simclr(im, aug_im):
 
     sigmas_neg = one.sum(dim=1) + two.sum(dim=1)
 
-    get_pos = torch.zeros((n,n))
+    get_pos = torch.zeros((n,n)).cuda()
     ind = np.diag_indices(get_pos.shape[0])
     get_pos[ind[0], ind[1]] = 1
     '''

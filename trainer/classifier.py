@@ -12,21 +12,14 @@ class ClassifierTrainer(Trainer):
             "val_acc" : []
         }
 
-    def train(self):
-        for ep in range(self.epochs):
-            train_stats = self._train_1_epoch()
-            self.log(train_stats, ep)
-            if self.val_dataloader != None:
-                val_stats = self.validate()
-                self.log(val_stats, ep)
-            else:
-                val_stats = { "val_loss" : 0, "val_acc": 0 }
-
-    def _train_1_epoch(self):
+    def _train_1_epoch(self, p_bar):
         total_loss = 0
         correct = 0
         self.model.train()
-        for (im, tar) in self.train_dataloader:
+        batch_size = self.train_dataloader.batch_size
+        len_train_set = len(self.train_dataloader.dataset)
+
+        for batch_idx, (im, tar) in enumerate(self.train_dataloader):
             im, tar = im.to(self.device), tar.to(self.device)
             out = self.model(im)
             loss = self.loss_func(out, tar)
@@ -34,38 +27,46 @@ class ClassifierTrainer(Trainer):
             total_loss += loss.item()
             pred = out.argmax(dim=1, keepdim=True)
             correct += pred.eq(tar.view_as(pred)).sum().item()
-            break
+            p_bar.update(batch_size)
+            p_bar.set_postfix( {
+                "train_loss" : total_loss / (batch_idx + 1),
+                "train_acc" : 100.0 * correct / len_train_set
+            })
         
         total_loss /= len(self.train_dataloader)
-        acc = float(correct*100 / len(self.train_dataloader.dataset))
+        acc = 100.0 * correct / len_train_set
         self.stats["train_loss"].append(total_loss)
         self.stats["train_acc"].append(acc)
 
         return { "train_loss" : total_loss, "train_acc" : acc } 
 
-    def validate(self):
+    def validate(self, p_bar):
+
+        # case where no validation is required.
+        if self.val_dataloader == None:
+            return { "val_loss" : 0, "val_acc": 0 }
+
         total_loss = 0
         correct = 0
+        batch_size = self.val_dataloader.batch_size
+        len_val_set = len(self.val_dataloader.dataset)
         self.model.eval()
-        for (im, tar) in self.val_dataloader:
+        for batch_idx, (im, tar) in enumerate(self.val_dataloader):
             im, tar = im.to(self.device), tar.to(self.device)
             out = self.model(im)
             loss = self.loss_func(out, tar)
             total_loss += loss.item()
             pred = out.argmax(dim=1, keepdim=True)
             correct += pred.eq(tar.view_as(pred)).sum().item()
+            p_bar.update(batch_size)
+            p_bar.set_postfix( {
+                "val_loss" : total_loss / (batch_idx + 1),
+                "val_acc" : 100.0 * correct / len_val_set
+            })
         
         total_loss /= len(self.val_dataloader)
-        acc = float(correct*100 / len(self.val_dataloader.dataset))
+        acc = 100.0 * correct / len_val_set
         self.stats["val_loss"].append(total_loss)
         self.stats["val_acc"].append(acc)
         return { "val_loss" : total_loss, "val_acc" : acc } 
 
-    def printSummary(self, train_stats, val_stats, ep):
-        print("Epoch {}, train Loss: {}, train accuracy : {} val loss : {} val accuracy : {}".format(
-                ep,
-                train_stats["train_loss"],
-                train_stats["train_acc"],
-                val_stats["val_loss"],
-                val_stats["val_acc"]
-            ))
