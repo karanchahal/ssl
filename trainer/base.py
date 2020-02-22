@@ -10,7 +10,7 @@ class Trainer:
         self.loss_func = loss_func
         self.optimizer = optimizer
         self.writer = SummaryWriter()
-        self.device = torch.device("cuda" if use_cuda else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def train(self):
         raise NotImplementedError

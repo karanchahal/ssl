@@ -66,17 +66,17 @@ def test_stl10():
     
     train_loader, linear_train_loader, val_loader = get_stl()
     resnet18 = models.resnet18()
-    device = torch.device("cuda" if use_cuda else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = get_model("simclr")().to(device)
 
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-    trainer = SimclrTrainer(10, model, train_loader, linear_train_loader, val_loader, get_loss, optimizer)
+    trainer = SimclrTrainer(10, 5, model, train_loader, linear_train_loader, val_loader, get_loss, optimizer)
     trainer.train()
 
 
 def test_mnist():
     train_loader, val_loader = get_mnist()
-    device = torch.device("cuda" if use_cuda else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = get_model("mnist")().to(device)
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     trainer = ClassifierTrainer(10, model, train_loader, val_loader, nll_loss, optimizer)

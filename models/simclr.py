@@ -14,7 +14,6 @@ class Simclr(nn.Module):
             nn.Linear(512, 128)
         )
 
-
     def get_layer_len(self):
         # TODO
         return 512

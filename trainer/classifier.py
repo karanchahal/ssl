@@ -22,8 +22,6 @@ class ClassifierTrainer(Trainer):
             else:
                 val_stats = { "val_loss" : 0, "val_acc": 0 }
 
-            self.printSummary(train_stats, val_stats, ep)
-
     def _train_1_epoch(self):
         total_loss = 0
         correct = 0
