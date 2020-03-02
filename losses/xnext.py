@@ -15,8 +15,8 @@ def _simclr(im, aug_im):
     d 0 e
     f g 0
     '''
-    one = get_negs * im_2_aug
-    two = get_negs * im_2_other_im
+    one = torch.exp(get_negs * im_2_aug / 0.1)
+    two = torch.exp(get_negs * im_2_other_im / 0.1)
 
     sigmas_neg = one.sum(dim=1) + two.sum(dim=1)
 
@@ -29,11 +29,10 @@ def _simclr(im, aug_im):
     0 0 1
     '''
 
-    one = get_pos * im_2_aug
-
+    one = torch.exp(get_pos * im_2_aug / 0.1)
+    eps = np.finfo(np.float32).eps.item()
     sigmas_pos = one.sum(dim=1) # get positive examples
-
-    loss = sigmas_pos / (sigmas_neg + sigmas_pos)
+    loss = -torch.log(sigmas_pos / (sigmas_neg + sigmas_pos + eps))
 
     return loss
 

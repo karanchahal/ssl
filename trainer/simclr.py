@@ -79,7 +79,7 @@ class SimclrTrainer(Trainer):
     def train_linear_layer(self):
         self.model2 = get_model('classifier')(self.model, self.im_size, self.num_classes)
         self.model2.to(self.device)
-        optimizer2 = optim.SGD(filter(lambda p: p.requires_grad, self.model2.parameters()), lr=0.01, momentum=0.9)
+        optimizer2 = optim.Adam(filter(lambda p: p.requires_grad, self.model2.parameters()), lr=0.001)
         print('\nTraining the Linear layer now....\n')
         self.trainer_val = ClassifierTrainer(self.epochs_linear, self.model2, self.linear_train_loader, None, nll_loss, optimizer2)
         self.trainer_val.train()

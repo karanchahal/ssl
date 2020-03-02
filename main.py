@@ -16,7 +16,7 @@ import torch.nn.functional as F
 def get_stl(path='./data/'):
 
     im_size = 64
-    batch_size = 2
+    batch_size = 8
 
     train_dataset = STL10(root=path, split='unlabeled', folds=None, transform=None, target_transform=None, download=True)
     linear_train_dataset = STL10(root=path, split='train', folds=None, transform=tfs.Compose([
@@ -69,7 +69,7 @@ def test_stl10():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = get_model("simclr")().to(device)
 
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
     trainer = SimclrTrainer(10, 5, model, train_loader, linear_train_loader, val_loader, get_loss, optimizer)
     trainer.train()
 
@@ -82,5 +82,5 @@ def test_mnist():
     trainer = ClassifierTrainer(10, model, train_loader, val_loader, nll_loss, optimizer)
     trainer.train()
 
-test_mnist()
-# test_stl10()
+#test_mnist()
+test_stl10()
