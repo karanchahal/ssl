@@ -37,6 +37,40 @@ def _simclr(im, aug_im):
     return loss
 
 
+def _simclr_seq(im, aug_im):
+    n, _ = im.size()
+    losses = []
+    for i in range(n):
+        img = im[i]
+        aug_img = aug_im[i]
+        pos_score = torch.exp(img.dot(aug_img))
+        neg_score = 0
+        for j in range(n):
+            if j != i:
+                next_img = im[j]
+                next_img_aug = aug_im[j]
+                neg_score += torch.exp(img.dot(next_img))
+                neg_score += torch.exp(img.dot(next_img_aug))
+
+        val = -torch.log(pos_score / (neg_score + pos_score))
+        losses.append(val)
+    
+    loss = torch.stack(losses).mean()
+    return loss
+
+    
+
+def test_loss_seq():
+
+    a = torch.tensor([[1, 2], [3, 4]]).view(2,2).float()
+    b = torch.tensor([[5, 6], [7, 8]]).view(2,2).float()
+    
+    loss1 = _simclr_seq(a, b)
+    # loss2 = get_loss(b, a)
+
+    # loss = torch.cat((loss1, loss2), dim=0)
+# test_loss_seq()
+
 def analytical_ans():
     pos = [
         1*5 + 2*6,
@@ -66,6 +100,10 @@ def get_loss(a, b):
     loss = torch.sum(loss1 + loss2, dim=0)
     N = a.shape[0]
     return loss / (2*N)
+
+def get_loss_seq(a, b):
+    loss = _simclr_seq(a, b)
+    return loss
 
 def test_loss():
 

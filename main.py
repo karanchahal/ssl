@@ -5,7 +5,7 @@ import torchvision.transforms as tfs
 import torchvision.models as models
 from models.factory import get_model
 from torch.utils.data import DataLoader
-from losses.xnext import get_loss
+from losses.xnext import get_loss, get_loss_seq
 from trainer.simclr import SimclrTrainer
 import torch.optim as optim
 from dataset.simclr import UnsupDataset
@@ -16,7 +16,7 @@ import torch.nn.functional as F
 def get_stl(path='./data/'):
 
     im_size = 64
-    batch_size = 8
+    batch_size = 128
 
     train_dataset = STL10(root=path, split='unlabeled', folds=None, transform=None, target_transform=None, download=True)
     linear_train_dataset = STL10(root=path, split='train', folds=None, transform=tfs.Compose([
@@ -70,7 +70,7 @@ def test_stl10():
     model = get_model("simclr")().to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    trainer = SimclrTrainer(10, 5, model, train_loader, linear_train_loader, val_loader, get_loss, optimizer)
+    trainer = SimclrTrainer(10, 5, model, train_loader, linear_train_loader, val_loader, get_loss_seq, optimizer)
     trainer.train()
 
 
